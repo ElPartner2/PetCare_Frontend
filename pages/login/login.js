@@ -7,13 +7,23 @@ export function init() {
 
 async function login(event) {
   event.preventDefault();
+
   const button = event.currentTarget.querySelector('button');
   const error = document.getElementById('login-error');
-  button.disabled = true; error.classList.add('hidden');
+
+  button.disabled = true;
+  error.classList.add('hidden');
+
   try {
-    await new AuthService().login(document.getElementById('username').value.trim(), document.getElementById('password').value);
+    await new AuthService().login(
+      document.getElementById('username').value.trim(),
+      document.getElementById('password').value
+    );
     await displayPage(mainPage);
   } catch (exception) {
-    error.textContent = exception.message; error.classList.remove('hidden');
-  } finally { button.disabled = false; }
+    error.textContent = exception.message;
+    error.classList.remove('hidden');
+  } finally {
+    button.disabled = false;
+  }
 }

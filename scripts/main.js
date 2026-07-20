@@ -6,4 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
   displayPage(auth.isAuthenticated() ? mainPage : loginPage);
 });
 
-window.addEventListener('auth:expired', () => displayPage(loginPage));
+window.addEventListener('auth:expired', () => {
+  displayPage(loginPage);
+});

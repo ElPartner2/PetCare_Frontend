@@ -1,14 +1,33 @@
 <template id="login-template">
   <section id="login-columns">
     <div id="login-body">
-      <div id="login-header"><span class="brand-mark">🐾</span><h1>PetCare</h1><p>Administra la salud de tus mascotas en un solo lugar.</p></div>
+      <div id="login-header">
+        <span class="brand-mark">🐾</span>
+        <h1>PetCare</h1>
+        <p>Administra la salud de tus mascotas en un solo lugar.</p>
+      </div>
+
       <form id="login-form">
-        <label class="default-field">Usuario<input id="username" autocomplete="username" required></label>
-        <label class="default-field">Contraseña<input id="password" type="password" autocomplete="current-password" required></label>
+        <label class="default-field">
+          Usuario
+          <input id="username" autocomplete="username" required>
+        </label>
+
+        <label class="default-field">
+          Contraseña
+          <input id="password" type="password" autocomplete="current-password" required>
+        </label>
+
         <p id="login-error" class="message error hidden" role="alert"></p>
         <button class="solid-primary-button" type="submit">Iniciar sesión</button>
       </form>
     </div>
-    <div id="login-background" aria-hidden="true"><div><span>🐶</span><h2>Cuidado sencillo,<br>mascotas felices.</h2></div></div>
+
+    <div id="login-background" aria-hidden="true">
+      <div>
+        <span>🐶</span>
+        <h2>Cuidado sencillo,<br>mascotas felices.</h2>
+      </div>
+    </div>
   </section>
 </template>
