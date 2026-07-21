@@ -10,6 +10,12 @@ const records = new MedicalRecordService();
 let selectedPet = null;
 
 export function init() {
+  selectedPet = null;
+
+  const recordForm = document.getElementById('record-form');
+  recordForm.reset();
+  recordForm.classList.add('hidden');
+
   document.getElementById('username-label').textContent = sessionStorage.getItem('username') || 'Usuario';
   document.getElementById('logoutBtn').addEventListener('click', () => {
     new AuthService().logout();
@@ -48,15 +54,26 @@ async function loadPets() {
     list.innerHTML = '';
 
     if (!items.length) {
-      list.innerHTML = '<div class="empty-state">ðŸ¾<p>AÃºn no tienes mascotas registradas.</p></div>';
+      list.innerHTML = '<div class="empty-state">🐾<p>Aún no tienes mascotas registradas.</p></div>';
       return;
     }
 
     items.forEach(pet => {
       const card = document.createElement('article');
+      const isSelected = selectedPet?.id === pet.id;
       card.className = `pet-card ${selectedPet?.id === pet.id ? 'selected' : ''}`;
-      card.innerHTML = `<div class="pet-avatar">${pet.species.toLowerCase().includes('cat') ? 'ðŸˆ' : 'ðŸ•'}</div><div><h3>${escapeHtml(pet.name)}</h3><p>${escapeHtml(pet.species)} Â· ${escapeHtml(pet.breed || 'Sin raza')}</p><span class="status ${pet.status}">${pet.status === 'active' ? 'Activa' : 'Inactiva'}</span></div>`;
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `Seleccionar mascota ${pet.name}`);
+      card.setAttribute('aria-pressed', String(isSelected));
+      card.innerHTML = `<div class="pet-avatar">${pet.species.toLowerCase().includes('cat') ? '🐈' : '🐕'}</div><div><h3>${escapeHtml(pet.name)}</h3><p>${escapeHtml(pet.species)} · ${escapeHtml(pet.breed || 'Sin raza')}</p><span class="status ${pet.status}">${pet.status === 'active' ? 'Activa' : 'Inactiva'}</span></div>`;
       card.addEventListener('click', () => selectPet(pet));
+      card.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          selectPet(pet);
+        }
+      });
       list.appendChild(card);
     });
   } catch (e) {
@@ -101,7 +118,7 @@ async function loadRecords() {
     list.innerHTML = '';
 
     if (!items.length) {
-      list.innerHTML = '<div class="empty-state">ðŸ©º<p>No hay registros mÃ©dicos activos.</p></div>';
+      list.innerHTML = '<div class="empty-state">🩺<p>No hay registros médicos activos.</p></div>';
       return;
     }
 
@@ -121,6 +138,11 @@ async function loadRecords() {
 async function createRecord(event) {
   event.preventDefault();
 
+  if (!selectedPet) {
+    showMessage('Selecciona una mascota antes de crear un registro médico.', true);
+    return;
+  }
+
   try {
     await records.create(new MedicalRecord({
       pet: selectedPet.id,
@@ -130,7 +152,7 @@ async function createRecord(event) {
     }));
     event.target.reset();
     event.target.classList.add('hidden');
-    showMessage('Registro mÃ©dico guardado.');
+    showMessage('Registro médico guardado.');
     loadRecords();
   } catch (e) {
     showMessage(e.message, true);
@@ -138,7 +160,7 @@ async function createRecord(event) {
 }
 
 async function deleteRecord(id) {
-  if (!confirm('Â¿Deseas archivar este registro?')) return;
+  if (!confirm('¿Deseas archivar este registro?')) return;
 
   try {
     await records.delete(id);
@@ -155,11 +177,11 @@ function value(id) {
 
 function typeLabel(type) {
   return ({
-    vaccination: 'VacunaciÃ³n',
+    vaccination: 'Vacunación',
     checkup: 'Consulta',
-    surgery: 'CirugÃ­a',
-    deworming: 'DesparasitaciÃ³n',
-    sterilization: 'EsterilizaciÃ³n',
+    surgery: 'Cirugía',
+    deworming: 'Desparasitación',
+    sterilization: 'Esterilización',
     other: 'Otro'
   })[type] || type;
 }

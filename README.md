@@ -12,4 +12,4 @@ No abras `index.html` directamente con `file://`, porque la navegación carga lo
 
 ## Configuración
 
-La URL del backend se encuentra en `styles/environment.js`. El backend debe permitir mediante CORS el origen usado por el frontend.
+La URL del backend se encuentra en `environment.js`. El backend debe permitir mediante CORS el origen usado por el frontend.
