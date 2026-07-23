@@ -1,12 +1,14 @@
 import { environment } from '../environment.js';
-import { apiRequest } from './api.service.js';
+import { apiRequest, getCollectionItems } from './api.service.js';
 import { Pet } from '../models/pet.model.js';
 
 export class PetService {
   baseUrl = `${environment.apiUrl}/pets/`;
 
   async getAll() {
-    return (await apiRequest(this.baseUrl))
+    const data = await apiRequest(this.baseUrl);
+
+    return getCollectionItems(data)
       .map(item => new Pet(item));
   }
 

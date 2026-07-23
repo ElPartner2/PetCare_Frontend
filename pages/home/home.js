@@ -8,9 +8,11 @@ import { displayPage, loginPage } from '../../scripts/navigation.js';
 const pets = new PetService();
 const records = new MedicalRecordService();
 let selectedPet = null;
+let recordsRequestId = 0;
 
 export function init() {
   selectedPet = null;
+  recordsRequestId++;
 
   const recordForm = document.getElementById('record-form');
   recordForm.reset();
@@ -84,18 +86,22 @@ async function loadPets() {
 
 async function createPet(event) {
   event.preventDefault();
+  const form = event.currentTarget;
+  const submitButton = form.querySelector('button[type="submit"]');
 
   try {
-    await pets.create(new Pet({
-      name: value('pet-name'),
-      species: value('pet-species'),
-      breed: value('pet-breed'),
-      birth_date: value('pet-birth-date')
-    }));
-    event.target.reset();
-    event.target.classList.add('hidden');
-    showMessage('Mascota registrada.');
-    loadPets();
+    await runWithPendingButton(submitButton, 'Guardando…', async () => {
+      await pets.create(new Pet({
+        name: value('pet-name'),
+        species: value('pet-species'),
+        breed: value('pet-breed'),
+        birth_date: value('pet-birth-date')
+      }));
+      form.reset();
+      form.classList.add('hidden');
+      showMessage('Mascota registrada.');
+      loadPets();
+    });
   } catch (e) {
     showMessage(e.message, true);
   }
@@ -110,11 +116,16 @@ async function selectPet(pet) {
 }
 
 async function loadRecords() {
+  const requestId = ++recordsRequestId;
+  const petId = selectedPet.id;
   const list = document.getElementById('records-list');
   list.innerHTML = '<p>Cargando...</p>';
 
   try {
-    const items = await records.getByPet(selectedPet.id);
+    const items = await records.getByPet(petId);
+
+    if (requestId !== recordsRequestId || selectedPet?.id !== petId) return;
+
     list.innerHTML = '';
 
     if (!items.length) {
@@ -126,10 +137,13 @@ async function loadRecords() {
       const card = document.createElement('article');
       card.className = 'record-card';
       card.innerHTML = `<div><span class="record-type">${typeLabel(record.typeRecord)}</span><h3>${escapeHtml(record.description)}</h3><p>${new Date(record.applicationDate).toLocaleString('es-MX')}</p>${record.boosterDate ? `<small>Refuerzo: ${new Date(record.boosterDate).toLocaleString('es-MX')}</small>` : ''}</div><button class="danger-button">Archivar</button>`;
-      card.querySelector('button').addEventListener('click', () => deleteRecord(record.id));
+      const archiveButton = card.querySelector('button');
+      archiveButton.addEventListener('click', () => deleteRecord(record.id, archiveButton));
       list.appendChild(card);
     });
   } catch (e) {
+    if (requestId !== recordsRequestId || selectedPet?.id !== petId) return;
+
     list.innerHTML = '';
     showMessage(e.message, true);
   }
@@ -137,6 +151,8 @@ async function loadRecords() {
 
 async function createRecord(event) {
   event.preventDefault();
+  const form = event.currentTarget;
+  const submitButton = form.querySelector('button[type="submit"]');
 
   if (!selectedPet) {
     showMessage('Selecciona una mascota antes de crear un registro médico.', true);
@@ -144,30 +160,52 @@ async function createRecord(event) {
   }
 
   try {
-    await records.create(new MedicalRecord({
-      pet: selectedPet.id,
-      type_record: value('record-type'),
-      description: value('record-description'),
-      booster_date: value('record-booster') || null
-    }));
-    event.target.reset();
-    event.target.classList.add('hidden');
-    showMessage('Registro médico guardado.');
-    loadRecords();
+    await runWithPendingButton(submitButton, 'Guardando…', async () => {
+      await records.create(new MedicalRecord({
+        pet: selectedPet.id,
+        type_record: value('record-type'),
+        description: value('record-description'),
+        booster_date: value('record-booster') || null
+      }));
+      form.reset();
+      form.classList.add('hidden');
+      showMessage('Registro médico guardado.');
+      loadRecords();
+    });
   } catch (e) {
     showMessage(e.message, true);
   }
 }
 
-async function deleteRecord(id) {
+async function deleteRecord(id, button) {
+  if (button.dataset.pending === 'true') return;
   if (!confirm('¿Deseas archivar este registro?')) return;
 
   try {
-    await records.delete(id);
-    showMessage('Registro archivado.');
-    loadRecords();
+    await runWithPendingButton(button, 'Archivando…', async () => {
+      await records.delete(id);
+      showMessage('Registro archivado.');
+      loadRecords();
+    });
   } catch (e) {
     showMessage(e.message, true);
+  }
+}
+
+async function runWithPendingButton(button, pendingText, request) {
+  if (button.dataset.pending === 'true') return;
+
+  const originalText = button.textContent;
+  button.dataset.pending = 'true';
+  button.disabled = true;
+  button.textContent = pendingText;
+
+  try {
+    return await request();
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+    delete button.dataset.pending;
   }
 }
 

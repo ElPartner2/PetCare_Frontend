@@ -9,6 +9,23 @@ export class MedicalRecord {
   }
 
   toApi() {
-    return { pet: this.pet, type_record: this.typeRecord, description: this.description, booster_date: this.boosterDate || null };
+    let boosterDate = null;
+
+    if (this.boosterDate) {
+      const parsedBoosterDate = new Date(this.boosterDate);
+
+      if (Number.isNaN(parsedBoosterDate.getTime())) {
+        throw new Error('La fecha de refuerzo no es válida. Revisa la fecha y la hora.');
+      }
+
+      boosterDate = parsedBoosterDate.toISOString();
+    }
+
+    return {
+      pet: this.pet,
+      type_record: this.typeRecord,
+      description: this.description,
+      booster_date: boosterDate
+    };
   }
 }

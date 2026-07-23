@@ -1,5 +1,5 @@
 import { environment } from '../environment.js';
-import { apiRequest } from './api.service.js';
+import { apiRequest, getCollectionItems } from './api.service.js';
 import { MedicalRecord } from '../models/medical-record.model.js';
 
 export class MedicalRecordService {
@@ -7,9 +7,9 @@ export class MedicalRecordService {
 
   async getByPet(petId) {
     const query = new URLSearchParams({ pet: petId });
-    const items = await apiRequest(`${this.baseUrl}?${query}`);
+    const data = await apiRequest(`${this.baseUrl}?${query}`);
 
-    return items
+    return getCollectionItems(data)
       .filter(item => item.pet === petId)
       .map(item => new MedicalRecord(item));
   }
